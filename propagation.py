@@ -4,6 +4,7 @@ Propagation class initialization options:
     kernel_type: 'fraunhofer' (alias 'fourier'), 'fresnel', 'fresnel_conv',
                  'asm' (alias 'angular_spectrum'), or 'kirchoff'. The transfer
                  function approaches may be more accurate
+        # five options:
         fraunhofer: far-field diffraction, purely a Fourier transform
         fresnel: near-field diffraction with Fresnel approximation, implemented
                  as a multiplication with a transfer function in Fourier domain
@@ -438,7 +439,7 @@ class NearFieldTransferFnPropagationBase(PropagationBase):
         """computes the Fourier transfer function for the deriving class's
         particular approximation
         """
-        raise NotImplementedError('Must implement in derived class')
+        raise NotImplementedError('Must implement in derived class')  # define in son class
 
     def forward(self, input_field):
         # force transfer function device to input's device if this module
@@ -447,7 +448,7 @@ class NearFieldTransferFnPropagationBase(PropagationBase):
                 and self.forward_transfer_fn.device != input_field.device):
             self.forward_transfer_fn = self.forward_transfer_fn.to(
                 input_field.device)
-
+        # check if field should be normalized
         if self.normalize_output:
             input_magnitude_sum = magnitude_sum(input_field)
 
@@ -461,7 +462,7 @@ class NearFieldTransferFnPropagationBase(PropagationBase):
         # Fourier transform back to get output
         output_cropped = self.cropped_ifft(fourier_output,
                                            self.image_resolution)
-
+        # FT/iFFT outputs 2*size-1, to ensure same size output, crop is neeeded.
         if self.normalize_output:
             output_magnitude_sum = magnitude_sum(output_cropped)
             output_cropped = output_cropped * (input_magnitude_sum
@@ -558,7 +559,7 @@ class FresnelPropagation(NearFieldTransferFnPropagationBase):
         # for linear convolution, otherwise the input
         # field is implicitly circularly padded
         if not circular_padding:
-            self.conv_resolution = self.conv_resolution * 2 - 1
+            self.conv_resolution = self.conv_resolution * 2 - 1  # python starts from 0.
         # physical dimensions
         self.conv_size = self.slm_pixel_pitch * self.conv_resolution
 

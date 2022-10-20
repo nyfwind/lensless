@@ -24,12 +24,14 @@ def phase_to_heightmap(phase, wavelength, refractive_index):
 
 
 def rect_to_polar(real, imag):
+    # from cos/sin to exponent
     mag = torch.pow(real**2 + imag**2, 0.5)
     ang = torch.atan2(imag, real)
     return mag, ang
 
 
 def polar_to_rect(mag, ang):
+    # from exponent to cos/sin
     real = mag * torch.cos(ang)
     imag = mag * torch.sin(ang)
     return real, imag
@@ -60,6 +62,7 @@ def conj(real_imag):
 
 
 def mul_complex(field1, field2):
+    # complex amplitude multiple
     real1, imag1 = unstack_complex(field1)
     real2, imag2 = unstack_complex(field2)
 
@@ -128,6 +131,7 @@ def recip_complex_polar(field):
 
 
 def conv_fft(img_real_imag, kernel_real_imag, padval=0):
+    # blurred = GT*PSF = iFFT(FFT(GT)xFFT(PSF))
     img_pad, kernel_pad, output_pad = conv_pad_sizes(img_real_imag.shape,
                                                      kernel_real_imag.shape)
 

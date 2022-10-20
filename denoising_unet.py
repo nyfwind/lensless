@@ -38,30 +38,33 @@ class ConvolveImage(nn.Module):
         self.K = K
 
     def forward(self, x):
-        # model point from infinity
+        """Inputs: x - GT images"""
+        # model point from infinity, plane wave
         input_field = torch.ones((self.resolution, self.resolution))
 
         phase_delay = utils.heightmap_to_phase(self.heightmap,
                                                self.wavelength,
                                                self.refractive_idc)
-
+        # plane wave go through fresnel lens
         field = optics.propagate_through_lens(input_field, phase_delay)
-
+        # then go through circular aperture
         field = optics.circular_aperture(field, self.r_cutoff)
 
         # kernel_type = 'fresnel_conv' leads to  nans
+        # free-space propagation using fresnel diffraction equ.
         element = Propagation(kernel_type='fresnel',
                               propagation_distances=self.focal_length,
                               slm_resolution=[self.resolution, self.resolution],
                               slm_pixel_pitch=[self.pixel_pitch, self.pixel_pitch],
                               wavelength=self.wavelength)
 
-        field = element.forward(field)
-        psf = utils.field_to_intensity(field)
-
+        field = element.forward(field)  # light field on the sensor, complex Amplitude
+        psf = utils.field_to_intensity(field)  # psf is intensity.
+        # normalized psf
         psf /= psf.sum()
-
+        # blurred image = GT * PSF.
         final = optics.convolve_img(x, psf)
+
         if not self.use_wiener:
             return final.to(DEVICE)
         else:
@@ -86,7 +89,7 @@ class ConvolveImage(nn.Module):
             filtered = utils.ifftshift(torch.ifft(product, 2))
             filtered = torch.clamp(filtered, min=1e-5)
 
-            return filtered[:, :, :, :, 0]
+            return filtered[:, :, :, :, 0]  # recovered = wiener fileter(blurred)
 
 
 # class WienerFilter(nn.Module):
@@ -111,8 +114,8 @@ class DenoisingUnet(nn.Module):
     def __init__(self, hyps):
         super().__init__()
 
-        self.norm = nn.InstanceNorm2d
-        self.img_sidelength = hyps['resolution']
+        self.norm = nn.InstanceNorm2d   # if no Unet, no such instance used.
+        self.img_sidelength = hyps['resolution']  # resolution = 512, i.e.
 
         num_downs_unet = num_divisible_by_2(512)
 

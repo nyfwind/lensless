@@ -1,0 +1,24 @@
+Hyperparameters:
+data_root: ./data
+logging_root: ./runs
+train_test: train
+exp_name: learn-doe
+checkpoint: None
+max_epoch: 100
+batch_size: 4
+reg_weight: 0.0
+init_K: 0.01
+use_wiener: False
+resolution: 512
+pixel_pitch: 2e-06
+r_cutoff: None
+refractive_idc: 1.4349
+wavelength: 5.3e-07
+init_lens: fresnel
+single_image: False
+download_data: False
+
+Hyperranges:
+lr: [1e-08]
+focal_length: [0.005]
+

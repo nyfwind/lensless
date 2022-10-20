@@ -61,12 +61,12 @@ def convolve_img(image, psf):
     :return: final convolved image (B,N,H,W)
     """
     image = image.cpu()
-    psf = torch.stack((psf, psf, psf), 0)
+    psf = torch.stack((psf, psf, psf), 0)   # for R,G,B channels
     psf = torch.unsqueeze(psf, 0)
     psf_stack = utils.stack_complex(psf, torch.zeros(psf.shape))
     img_stack = utils.stack_complex(image, torch.zeros(image.shape))
-    convolved = utils.conv_fft(img_stack, psf_stack, padval=0)
-    return convolved[:,:,:,:,0]
+    convolved = utils.conv_fft(img_stack, psf_stack, padval=0)  # blurred = GT*PSF = iFFT(FFT(GT)xFFT(PSF))
+    return convolved[:,:,:,:,0]   # 0 - real, 1- imag, return only intesntiy
 
 def circular_aperture(input_field, r_cutoff):
     """
@@ -79,10 +79,10 @@ def circular_aperture(input_field, r_cutoff):
              -(input_shape[1] // 2):(input_shape[1] + 1) // 2].astype(np.float64)
     if r_cutoff is None:
         r_cutoff = np.amax(x)
-    r = np.sqrt(x ** 2 + y ** 2)
-    aperture = (r < r_cutoff)
-    aperture = torch.Tensor(aperture)
-    aperture = utils.stack_complex(aperture, aperture)
+    r = np.sqrt(x ** 2 + y ** 2)   # effective radius
+    aperture = (r < r_cutoff)    # output false/true
+    aperture = torch.Tensor(aperture)   # convert true/false to 1/0
+    aperture = utils.stack_complex(aperture, aperture)   # same ape for real/image
     return aperture * input_field
 
 
